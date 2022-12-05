@@ -1,55 +1,73 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import findBooks from "./Components/FetchHook/findBooks";
 
+import SearchForm from "./Components/SearchForm/SearchForm";
+import SelectSorting from "./Components/SortBooks/SelectSorting";
+import BooksList from "./Components/BooksList/BooksList";
+
 import { Wrapper } from "./Components/Modals/Wrapper.styled";
 import { Title } from "./Components/UI/Title.styled";
-import { Form, Input, InputButton } from "./Components/Form/Form.styled";
-import { BookItem } from "./Components/UI/BookItem.styled";
 
-//extracted Data object expected structure
-interface extractedData {
+// Expected structure of fetched Books object ;
+export interface BooksProps {
   objectID: number;
-  text: string;
+  title: string;
   points: number;
-  relevany_score: number;
+  relevancy_score: number;
   [key: string]: any;
 }
 
+// Sort the shown BooksProps according to the sorting preference in descending order;
+const sortBooksHandler = (
+  type: string,
+  arrayToBeSorted: BooksProps[]
+): BooksProps[] => {
+  let sortedArray = [];
+  if (type === "relevance") {
+    sortedArray = arrayToBeSorted.sort(
+      (bookItem1: BooksProps, bookItem2: BooksProps) => {
+        return bookItem2.relevancy_score - bookItem1.relevancy_score;
+      }
+    );
+  } else {
+    sortedArray = arrayToBeSorted.sort(
+      (bookItem1: BooksProps, bookItem2: BooksProps) => {
+        return bookItem2.points - bookItem1.points;
+      }
+    );
+  }
+  return sortedArray;
+};
+
 export default function App(): JSX.Element {
-  // store user input
-  const searchedTermRef = useRef<HTMLInputElement>(null);
+  // Store fetched books;
+  const [books, setBooks] = useState<BooksProps[]>([]);
 
-  // store fetched data
-  const [extractedData, setextractedData] = useState<extractedData[]>([]);
+  // Store sorting Option from SortBooks Component;
+  const [sortingOption, setSortingOption] = useState("relevance");
 
-  const submitHandler = (e: React.FormEvent) => {
-    const inputText = searchedTermRef.current!.value;
-
+  // Handle submit event from SearchForm Component;
+  const submitHandler = async (e: React.FormEvent, term: string) => {
     e.preventDefault();
 
-    // Pass user input to fetch function and return results
-    findBooks(inputText).then((res) => {
-      setextractedData(res);
-      console.log(res);
-    });
+    // Pass user input to fetch function and return results;
+    const bookResponse: BooksProps[] = await findBooks(term);
+    setBooks(bookResponse);
+    setSortingOption("relevance");
   };
+
+  // Re-render books mapping according to sorting option;
+  useEffect(() => {
+    setBooks(sortBooksHandler(sortingOption, books));
+  }, [sortingOption, books]);
 
   return (
     <Wrapper>
       <Title>Library Search</Title>
-      <Form onSubmit={submitHandler}>
-        <Input
-          type="text"
-          placeholder="Search for your book:"
-          ref={searchedTermRef}
-        />
-        <InputButton type="submit">Search</InputButton>
-      </Form>
-      {`Results: ${extractedData.length}`}
-      {extractedData.map((item: extractedData) => {
-        return <BookItem key={item.objectID}>{item.title}</BookItem>;
-      })}
+      <SearchForm submitHandler={submitHandler} />
+      <SelectSorting setSortingOption={setSortingOption} />
+      <BooksList books={books} />
     </Wrapper>
   );
 }
