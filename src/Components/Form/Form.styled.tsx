@@ -10,7 +10,7 @@ export const Input = styled.input`
   padding: 0.5rem;
 `;
 
-export const InputButton = styled.input`
+export const InputButton = styled.button`
   background: #3d85c6;
   color: white;
   border: none;

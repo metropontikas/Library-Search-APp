@@ -4,7 +4,7 @@ interface bookItem {
   relevancy_score: number;
 }
 
-const findBooks = async (searchData: string): Promise<[{}]> => {
+const findBooks = async (searchData: string): Promise<[]> => {
   const result = await axios(
     `https://hn.algolia.com/api/v1/search?query=${searchData}`
   );

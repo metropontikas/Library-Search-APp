@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import findBooks from "./Components/FetchHook/findBooks";
 
@@ -7,26 +7,48 @@ import { Title } from "./Components/UI/Title.styled";
 import { Form, Input, InputButton } from "./Components/Form/Form.styled";
 import { BookItem } from "./Components/UI/BookItem.styled";
 
-export default function App(): JSX.Element {
-  const [extractedData, setextractedData] = useState([{}]);
+//extracted Data object expected structure
+interface extractedData {
+  objectID: number;
+  text: string;
+  points: number;
+  relevany_score: number;
+  [key: string]: any;
+}
 
-  useEffect(() => {
-    findBooks("web development").then((res) => {
+export default function App(): JSX.Element {
+  // store user input
+  const searchedTermRef = useRef<HTMLInputElement>(null);
+
+  // store fetched data
+  const [extractedData, setextractedData] = useState<extractedData[]>([]);
+
+  const submitHandler = (e: React.FormEvent) => {
+    const inputText = searchedTermRef.current!.value;
+
+    e.preventDefault();
+
+    // Pass user input to fetch function and return results
+    findBooks(inputText).then((res) => {
       setextractedData(res);
+      console.log(res);
     });
-  }, []);
-  console.log(extractedData);
+  };
 
   return (
     <Wrapper>
       <Title>Library Search</Title>
-      <Form>
-        <Input placeholder="Search for your book:" />
-        <InputButton type="submit" value="Search" />
+      <Form onSubmit={submitHandler}>
+        <Input
+          type="text"
+          placeholder="Search for your book:"
+          ref={searchedTermRef}
+        />
+        <InputButton type="submit">Search</InputButton>
       </Form>
       {`Results: ${extractedData.length}`}
-      {extractedData.map((item) => {
-        return <BookItem>{item.title}</BookItem>;
+      {extractedData.map((item: extractedData) => {
+        return <BookItem key={item.objectID}>{item.title}</BookItem>;
       })}
     </Wrapper>
   );
